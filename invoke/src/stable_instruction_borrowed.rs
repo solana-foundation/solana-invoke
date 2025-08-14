@@ -22,13 +22,18 @@ impl<'ix> StableInstructionBorrowed<'ix> {
     pub(crate) fn new(ix: &'ix Instruction) -> Self {
         let data = StableVecBorrowed::from(&ix.data);
         let accounts = StableVecBorrowed::from(&ix.accounts);
-        let fake_stable_ix = ManuallyDrop::new(StableInstruction {
-            accounts: unsafe {
-                core::mem::transmute::<StableVecBorrowed<_>, StableVec<_>>(accounts)
-            },
-            data: unsafe { core::mem::transmute::<StableVecBorrowed<_>, StableVec<_>>(data) },
-            program_id: ix.program_id,
-        });
+        // SAFETY:
+        // We transmute between two `repr(C)` types with the same layout (and verify this) assumption
+        // in `test_layout_matches`
+        // We then immediately move our constructed `StableInstruction` into `ManuallyDrop` to prevent it
+        // being dropped and freeing data we don't own.
+        let fake_stable_ix = unsafe {
+            ManuallyDrop::new(StableInstruction {
+                accounts: core::mem::transmute::<StableVecBorrowed<_>, StableVec<_>>(accounts),
+                data: core::mem::transmute::<StableVecBorrowed<_>, StableVec<_>>(data),
+                program_id: ix.program_id,
+            })
+        };
 
         Self {
             stabilized_instruction: fake_stable_ix,
@@ -36,16 +41,8 @@ impl<'ix> StableInstructionBorrowed<'ix> {
         }
     }
 
-    fn stable_instruction_ref<'borrow>(&'borrow self) -> &'borrow StableInstruction
-    where
-        // 'ix must live at least as long as 'borrow
-        'ix: 'borrow,
-    {
-        &self.stabilized_instruction
-    }
-
     pub(crate) fn instruction_addr(&self) -> *const u8 {
-        self.stable_instruction_ref() as *const StableInstruction as *const u8
+        &self.stabilized_instruction as *const ManuallyDrop<StableInstruction> as *const u8
     }
 }
 
