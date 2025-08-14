@@ -1,4 +1,5 @@
 #![doc = include_str!("../../README.md")]
+#![allow(unexpected_cfgs)]
 
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, instruction::Instruction,

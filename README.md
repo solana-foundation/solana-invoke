@@ -9,8 +9,9 @@ The current CPI functions `solana_program::program::invoke*` perform unnecessary
 The compute and heap savings scale with the amount of accounts and data passed in on CPI. Even in the test program featured in `test-program/`, which passes in only two accounts and O(16 bytes) of data, a significant saving is observed (overhead reduced from 536 cus -> 197 cus).
 
 ```rust
-// test-program schematic. logs and asserts are redacted.
-
+use solana_program::{
+    account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey,
+};
 // A simple solana program that transfers 1 lamport thrice
 fn process_instruction(
     _program_id: &Pubkey,

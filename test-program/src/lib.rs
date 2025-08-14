@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use solana_program::{
     account_info::AccountInfo, compute_units::sol_remaining_compute_units,
     entrypoint::ProgramResult, log::sol_log, pubkey::Pubkey,
@@ -67,9 +69,9 @@ mod tests {
         pubkey::Pubkey,
         signature::Keypair,
         signer::Signer,
-        system_program,
         transaction::Transaction,
     };
+    use solana_sdk_ids::system_program;
 
     #[tokio::test]
     async fn test_cpi() {
