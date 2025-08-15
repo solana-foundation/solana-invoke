@@ -1,9 +1,9 @@
 #![doc = include_str!("../../README.md")]
 #![allow(unexpected_cfgs)]
 
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, instruction::Instruction,
-};
+use solana_account_info::AccountInfo;
+use solana_instruction::Instruction;
+use solana_program_entrypoint::ProgramResult;
 
 mod stable_instruction_borrowed;
 
@@ -40,7 +40,7 @@ pub fn invoke_signed(
 }
 
 #[cfg(target_os = "solana")]
-use solana_program::syscalls::sol_invoke_signed_rust;
+use solana_define_syscall::definitions::sol_invoke_signed_rust;
 
 #[cfg(not(target_os = "solana"))]
 unsafe fn sol_invoke_signed_rust(_: *const u8, _: *const u8, _: u64, _: *const u8, _: u64) -> u64 {
@@ -67,7 +67,7 @@ pub fn invoke_signed_unchecked(
     };
 
     match result {
-        solana_program::entrypoint::SUCCESS => Ok(()),
+        solana_program_entrypoint::SUCCESS => Ok(()),
         _ => Err(result.into()),
     }
 }

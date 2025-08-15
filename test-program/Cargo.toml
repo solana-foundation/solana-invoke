@@ -8,9 +8,16 @@ crate-type = ["cdylib", "lib"]
 name = "triple_transfer"
 
 [dependencies]
-solana-program = "2.1"
+solana-account-info = { workspace = true }
+solana-cpi = { workspace = true }
+solana-define-syscall = { workspace = true }
 solana-invoke = { workspace = true }
-solana-sdk-ids = "2.0"
+solana-msg = { workspace = true }
+solana-program-entrypoint = { workspace = true }
+solana-pubkey = { workspace = true }
+solana-sdk-ids = { workspace = true }
+solana-system-interface = { workspace = true, features = ["bincode"] }
+solana-sysvar = { workspace = true }
 
 [dev-dependencies]
 solana-program-test = "2.1"

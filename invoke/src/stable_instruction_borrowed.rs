@@ -1,9 +1,7 @@
 use std::{marker::PhantomData, mem::ManuallyDrop};
 
-use solana_program::{
-    instruction::Instruction,
-    stable_layout::{stable_instruction::StableInstruction, stable_vec::StableVec},
-};
+use solana_instruction::Instruction;
+use solana_stable_layout::{stable_instruction::StableInstruction, stable_vec::StableVec};
 
 /// Similarly to [`StableInstruction`] this type represents a vector with a stable (`repr(C)` memory layout).
 /// Unlike `StableInstruction`, it does not semantically own the buffers inside the instruction, and they will not be dropped
