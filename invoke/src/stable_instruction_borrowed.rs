@@ -3,12 +3,12 @@ use std::{marker::PhantomData, mem::ManuallyDrop};
 use solana_instruction::Instruction;
 use solana_stable_layout::{stable_instruction::StableInstruction, stable_vec::StableVec};
 
-/// Similarly to [`StableInstruction`] this type represents a vector with a stable (`repr(C)` memory layout).
+/// Similarly to [`StableInstruction`], this type represents an instruction with a stable (`repr(C)` memory layout).
 /// Unlike `StableInstruction`, it does not semantically own the buffers inside the instruction, and they will not be dropped
 /// when the type is.
 pub(crate) struct StableInstructionBorrowed<'ix> {
     /// A [`StableInstruction`] is constructed from a shared reference to an [`Instruction`] to ensure a valid memory layout.
-    /// Then [`ManuallyDrop`] is used to ensure the borrowed data is not dropped when the type is.
+    /// [`ManuallyDrop`] is used to ensure the borrowed data is not dropped when the type is.
     stabilized_instruction: ManuallyDrop<StableInstruction>,
     /// We don't actually need access to the original instruction, but we do need to ensure it is borrowed for as long as this
     /// type is accessible to ensure it is not moved/invalidated.
