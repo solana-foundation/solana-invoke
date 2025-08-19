@@ -1,0 +1,114 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ "**" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
+
+jobs:
+  fmt:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+      - run: cargo build --workspace --all-features --verbose
+
+  # Build the on-chain program
+  build-sbf:
+    name: build-sbf
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v2.3.7/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      - name: Check Solana Install
+        run: solana --version
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+
+      - name: Build Solana program (SBF)
+        run: |
+          cargo build-sbf --manifest-path test-program/Cargo.toml
+
+      - name: Upload SBF artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbf-artifacts
+          path: |
+            target/deploy/*.so
+            target/deploy/*-keypair.json
+          if-no-files-found: error
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    needs: build-sbf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+
+      - name: Download SBF artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sbf-artifacts
+          path: target/deploy
+
+      - name: Run tests (workspace)
+      # Set BPF_OUT_DIR to resolve issue with build-sbf + workspaces
+        run: BPF_OUT_DIR=$PWD/target/deploy cargo test --workspace --all-features -- --nocapture

@@ -1,15 +1,24 @@
 [package]
 name = "solana-invoke"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = [
     "Cavey Cool <caveycool@gmail.com>",
     "Magnetar Fields <0xMAGNETAR@proton.me>",
+    "Jamie Hill-Daniel <jamie@osec.io",
 ]
 license = "MIT OR Apache-2.0"
 description = "A drop-in replacement for `solana_program::program::invoke*` with better compute and heap efficiency."
-repository = "https://github.com/cavemanloverboy/solana-invoke"
-
+repository = "https://github.com/solana-foundation/solana-invoke"
 
 [dependencies]
-solana-program = "2.1"
+solana-account-info = { workspace = true }
+solana-define-syscall.workspace = true
+solana-instruction = { workspace = true }
+solana-program-entrypoint = { workspace = true }
+solana-stable-layout = { workspace = true }
+
+[dev-dependencies]
+solana-cpi = { workspace = true }
+solana-system-interface = { workspace = true, features = ["bincode"] }
+solana-pubkey = { workspace = true }

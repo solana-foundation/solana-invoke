@@ -1,9 +1,12 @@
-use solana_program::{
-    account_info::AccountInfo, compute_units::sol_remaining_compute_units,
-    entrypoint::ProgramResult, log::sol_log, pubkey::Pubkey,
-};
+#![allow(unexpected_cfgs)]
 
-solana_program::entrypoint!(process_instruction);
+use solana_account_info::AccountInfo;
+use solana_cpi::invoke;
+use solana_msg::sol_log;
+use solana_program_entrypoint::{entrypoint, ProgramResult};
+use solana_pubkey::Pubkey;
+
+entrypoint!(process_instruction);
 
 const FIXED_CPI_COST: u64 = 1000;
 const REMAINING_CU_COST: u64 = 100;
@@ -20,13 +23,13 @@ fn process_instruction(
     // 2) Then with our invoke
     // 3) Then with our invoke_unchecked
     let transfer =
-        solana_program::system_instruction::transfer(accounts[0].key, accounts[1].key, 1);
+        solana_system_interface::instruction::transfer(accounts[0].key, accounts[1].key, 1);
 
     // 1) First with standard invoke_signed.
-    sol_log("invoking system program via solana_program::program::invoke");
-    let first = sol_remaining_compute_units();
-    solana_program::program::invoke(&transfer, &accounts[..2])?;
-    let second = sol_remaining_compute_units();
+    sol_log("invoking system program via solana_cpi::invoke");
+    let first = remaining_compute_units();
+    invoke(&transfer, &accounts[..2])?;
+    let second = remaining_compute_units();
     assert_eq!(accounts[0].lamports(), original_balance - 1);
     sol_log(&format!(
         "invoked system program via solana_program::program::invoke successfully: {} cus",
@@ -35,9 +38,9 @@ fn process_instruction(
 
     // 2) Then with our invoke_signed
     sol_log("invoking system program via our invoke");
-    let first = sol_remaining_compute_units();
+    let first = remaining_compute_units();
     solana_invoke::invoke(&transfer, &accounts[..2])?;
-    let second = sol_remaining_compute_units();
+    let second = remaining_compute_units();
     assert_eq!(accounts[0].lamports(), original_balance - 2);
     sol_log(&format!(
         "invoked system program via our invoke successfully: {} cus",
@@ -46,9 +49,9 @@ fn process_instruction(
 
     // 3) Then with our invoke_unchecked
     sol_log("invoking system program via our invoke");
-    let first = sol_remaining_compute_units();
+    let first = remaining_compute_units();
     solana_invoke::invoke_unchecked(&transfer, &accounts[..2])?;
-    let second = sol_remaining_compute_units();
+    let second = remaining_compute_units();
     assert_eq!(accounts[0].lamports(), original_balance - 3);
     sol_log(&format!(
         "invoked system program via our invoke_unchecked successfully: {} cus",
@@ -56,6 +59,19 @@ fn process_instruction(
     ));
 
     Ok(())
+}
+
+#[inline]
+pub fn remaining_compute_units() -> u64 {
+    #[cfg(target_os = "solana")]
+    unsafe {
+        solana_define_syscall::definitions::sol_remaining_compute_units()
+    }
+
+    #[cfg(not(target_os = "solana"))]
+    {
+        solana_sysvar::program_stubs::sol_remaining_compute_units()
+    }
 }
 
 #[cfg(test)]
@@ -67,9 +83,9 @@ mod tests {
         pubkey::Pubkey,
         signature::Keypair,
         signer::Signer,
-        system_program,
         transaction::Transaction,
     };
+    use solana_sdk_ids::system_program;
 
     #[tokio::test]
     async fn test_cpi() {
