@@ -53,14 +53,13 @@ jobs:
             . -> target
       - run: cargo build --workspace --all-features --verbose
 
-  # Build the on-chain program(s) to SBF and publish artifacts
+  # Build the on-chain program
   build-sbf:
     name: build-sbf
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Install Solana CLI
       - name: Install Solana CLI
         run: |
           sh -c "$(curl -sSfL https://release.anza.xyz/v2.3.7/install)"
@@ -68,7 +67,6 @@ jobs:
       - name: Check Solana Install
         run: solana --version
 
-      # Nightly toolchain is commonly required for SBF builds
       - name: Install Rust nightly
         uses: dtolnay/rust-toolchain@nightly
 
@@ -78,16 +76,10 @@ jobs:
           workspaces: |
             . -> target
 
-      # Build each Solana program crate in your workspace. Duplicate the step if
-      # you have multiple programs, or point to the workspace manifest if you have
-      # a dedicated 'programs' workspace. Replace paths accordingly.
       - name: Build Solana program (SBF)
         run: |
-          # Example for one program crate:
           cargo build-sbf --manifest-path test-program/Cargo.toml
-          # If multiple programs, repeat with each manifest.
 
-      # Publish the deployable artifacts for downstream jobs
       - name: Upload SBF artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -97,7 +89,6 @@ jobs:
             target/deploy/*-keypair.json
           if-no-files-found: error
 
-  # Test now depends on SBF artifacts being available
   test:
     name: test
     runs-on: ubuntu-latest
@@ -112,14 +103,12 @@ jobs:
           workspaces: |
             . -> target
 
-      # Make the built programs available where solana-program-test expects them:
-      # target/deploy/<program>.so and <program>-keypair.json
       - name: Download SBF artifacts
         uses: actions/download-artifact@v4
         with:
           name: sbf-artifacts
           path: target/deploy
 
-      # Run tests; solana-program-test will find the .so + keypair in target/deploy
       - name: Run tests (workspace)
+      # Set BPF_OUT_DIR to resolve issue with build-sbf + workspaces
         run: BPF_OUT_DIR=$PWD/target/deploy cargo test --workspace --all-features -- --nocapture
