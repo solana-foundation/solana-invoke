@@ -1,4 +1,4 @@
-#![doc = include_str!("../../README.md")]
+#![doc = include_str!("../README.md")]
 #![allow(unexpected_cfgs)]
 
 use solana_account_info::AccountInfo;
