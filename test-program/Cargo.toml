@@ -20,6 +20,6 @@ solana-system-interface = { workspace = true, features = ["bincode"] }
 solana-sysvar = { workspace = true }
 
 [dev-dependencies]
-solana-program-test = "2.1"
-solana-sdk = "2.1"
+solana-program-test = "3"
+solana-sdk = "3"
 tokio = { version = "1.37.0", features = ["rt", "macros"] }
