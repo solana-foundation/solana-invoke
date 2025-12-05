@@ -39,35 +39,62 @@ pub fn invoke_signed(
     invoke_signed_unchecked(instruction, account_infos, signers_seeds)
 }
 
-#[cfg(target_os = "solana")]
-use solana_define_syscall::definitions::sol_invoke_signed_rust;
-
-#[cfg(not(target_os = "solana"))]
-unsafe fn sol_invoke_signed_rust(_: *const u8, _: *const u8, _: u64, _: *const u8, _: u64) -> u64 {
-    unimplemented!("only supported with `target_os = \"solana\"")
-}
-
 pub fn invoke_signed_unchecked(
     instruction: &Instruction,
     account_infos: &[AccountInfo],
     signers_seeds: &[&[&[u8]]],
 ) -> ProgramResult {
-    use stable_instruction_borrowed::StableInstructionBorrowed;
-    let stable = StableInstructionBorrowed::new(instruction);
-    let instruction_addr = stable.instruction_addr();
+    #[cfg(target_os = "solana")]
+    {
+        cpi::invoke_signed_unchecked(instruction, account_infos, signers_seeds)
+    }
 
-    let result = unsafe {
-        sol_invoke_signed_rust(
-            instruction_addr,
-            account_infos as *const _ as *const u8,
-            account_infos.len() as u64,
-            signers_seeds as *const _ as *const u8,
-            signers_seeds.len() as u64,
-        )
-    };
+    #[cfg(not(target_os = "solana"))]
+    solana_sysvar::program_stubs::sol_invoke_signed(instruction, account_infos, signers_seeds)
+}
 
-    match result {
-        solana_program_entrypoint::SUCCESS => Ok(()),
-        _ => Err(result.into()),
+pub mod cpi {
+    use super::stable_instruction_borrowed;
+    use solana_account_info::AccountInfo;
+    use solana_instruction::Instruction;
+    use solana_program_entrypoint::ProgramResult;
+
+    pub fn invoke_signed_unchecked(
+        instruction: &Instruction,
+        account_infos: &[AccountInfo],
+        signers_seeds: &[&[&[u8]]],
+    ) -> ProgramResult {
+        use stable_instruction_borrowed::StableInstructionBorrowed;
+        let stable = StableInstructionBorrowed::new(instruction);
+        let instruction_addr = stable.instruction_addr();
+
+        let result = unsafe {
+            sol_invoke_signed_rust(
+                instruction_addr,
+                account_infos as *const _ as *const u8,
+                account_infos.len() as u64,
+                signers_seeds as *const _ as *const u8,
+                signers_seeds.len() as u64,
+            )
+        };
+
+        match result {
+            solana_program_entrypoint::SUCCESS => Ok(()),
+            _ => Err(result.into()),
+        }
+    }
+
+    #[cfg(target_os = "solana")]
+    use solana_define_syscall::definitions::sol_invoke_signed_rust;
+
+    #[cfg(not(target_os = "solana"))]
+    unsafe fn sol_invoke_signed_rust(
+        _: *const u8,
+        _: *const u8,
+        _: u64,
+        _: *const u8,
+        _: u64,
+    ) -> u64 {
+        unimplemented!("only supported with `target_os = \"solana\"")
     }
 }

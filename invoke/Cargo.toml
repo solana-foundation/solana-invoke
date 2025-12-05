@@ -17,6 +17,7 @@ solana-define-syscall.workspace = true
 solana-instruction = { workspace = true }
 solana-program-entrypoint = { workspace = true }
 solana-stable-layout = { workspace = true }
+solana-sysvar = { workspace = true }
 
 [dev-dependencies]
 solana-cpi = { workspace = true }
