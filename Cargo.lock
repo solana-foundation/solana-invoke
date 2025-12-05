@@ -4890,7 +4890,7 @@ dependencies = [
 
 [[package]]
 name = "solana-invoke"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "solana-account-info",
  "solana-cpi",
@@ -4900,6 +4900,7 @@ dependencies = [
  "solana-pubkey",
  "solana-stable-layout",
  "solana-system-interface",
+ "solana-sysvar",
 ]
 
 [[package]]
