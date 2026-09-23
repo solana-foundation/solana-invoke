@@ -1,3 +1,6 @@
+// This code isn't used on host, but we still want to compile and test it.
+#![cfg_attr(not(target_os = "solana"), allow(dead_code))]
+
 use std::{marker::PhantomData, mem::ManuallyDrop};
 
 use solana_instruction::Instruction;
