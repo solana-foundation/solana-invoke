@@ -13,10 +13,15 @@ repository = "https://github.com/solana-foundation/solana-invoke"
 
 [dependencies]
 solana-account-info = { workspace = true }
-solana-define-syscall.workspace = true
 solana-instruction = { workspace = true }
 solana-program-entrypoint = { workspace = true }
 solana-stable-layout = { workspace = true }
+
+[target.'cfg(target_os = "solana")'.dependencies]
+solana-define-syscall = { workspace = true }
+
+[target.'cfg(not(target_os = "solana"))'.dependencies]
+solana-sysvar = { workspace = true }
 
 [dev-dependencies]
 solana-cpi = { workspace = true }

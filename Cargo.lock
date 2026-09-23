@@ -4898,6 +4898,7 @@ dependencies = [
  "solana-pubkey",
  "solana-stable-layout",
  "solana-system-interface",
+ "solana-sysvar",
 ]
 
 [[package]]
